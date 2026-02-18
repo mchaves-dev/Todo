@@ -1,0 +1,48 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+#pragma warning disable CA1812
+// The code that's violating the rule is on this line.
+#pragma warning restore CA1812
+
+[*.cs]
+
+[*.{cs,vb}]
+dotnet_diagnostic.CA1812.severity = none
+
+#pragma warning disable CA1819
+// The code that's violating the rule is on this line.
+#pragma warning restore CA1819
+
+[*.{cs,vb}]
+dotnet_diagnostic.CA1819.severity = none
+
+#pragma warning disable CA1515
+// The code that's violating the rule is on this line.
+#pragma warning restore CA1515
+
+[*.{cs,vb}]
+dotnet_diagnostic.CA1515.severity = none
+
+#pragma warning disable CA2007
+// The code that's violating the rule is on this line.
+#pragma warning restore CA2007
+
+[*.{cs,vb}]
+dotnet_diagnostic.CA2007.severity = none
+
+#pragma warning disable CA1034
+// The code that's violating the rule is on this line.
+#pragma warning restore CA1034
+
+[*.{cs,vb}]
+dotnet_diagnostic.CA1034.severity = none
+
+[*.cs]
+dotnet_diagnostic.MA0004.severity = none
