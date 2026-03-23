@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using TodoApp.Api.Database;
-using TodoApp.Api.Endpoints;
+using TodoApp.Api.Aplication.Endpoints;
+using TodoApp.Api.Infra.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>((provider, opt) =>

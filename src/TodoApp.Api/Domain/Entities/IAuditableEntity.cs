@@ -1,4 +1,4 @@
-namespace TodoApp.Api.Entities;
+namespace TodoApp.Api.Domain.Entities;
 
 internal interface IAuditableEntity
 {

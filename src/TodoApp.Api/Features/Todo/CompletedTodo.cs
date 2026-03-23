@@ -1,6 +1,6 @@
-using TodoApp.Api.Database;
-using TodoApp.Api.Endpoints;
-using TodoApp.Api.Entities;
+using TodoApp.Api.Aplication.Endpoints;
+using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
 

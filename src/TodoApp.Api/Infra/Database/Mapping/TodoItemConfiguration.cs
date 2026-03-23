@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TodoApp.Api.Entities;
+using TodoApp.Api.Domain.Entities;
 
-namespace TodoApp.Api.Database.Mapping;
+namespace TodoApp.Api.Infra.Database.Mapping;
 
 internal sealed class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
 {

@@ -1,4 +1,4 @@
-namespace TodoApp.Api.Enums;
+namespace TodoApp.Api.Domain.Enums;
 
 public enum EPriority
 {

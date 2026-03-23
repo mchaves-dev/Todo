@@ -1,4 +1,4 @@
-namespace TodoApp.Api.Endpoints;
+namespace TodoApp.Api.Aplication.Endpoints;
 
 internal interface IEndpoint
 {

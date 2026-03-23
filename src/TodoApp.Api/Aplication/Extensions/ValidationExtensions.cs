@@ -1,6 +1,6 @@
 using FluentValidation.Results;
 
-namespace TodoApp.Api.Extensions;
+namespace TodoApp.Api.Aplication.Extensions;
 
 public static class ValidationExtensions
 {

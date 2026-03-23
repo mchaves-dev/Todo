@@ -1,6 +1,6 @@
-using TodoApp.Api.Enums;
+using TodoApp.Api.Domain.Enums;
 
-namespace TodoApp.Api.Entities;
+namespace TodoApp.Api.Domain.Entities;
 
 public sealed class TodoItem : IAuditableEntity
 {

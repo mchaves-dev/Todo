@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TodoApp.Api.Database;
-using TodoApp.Api.DTOs.Todo;
-using TodoApp.Api.Endpoints;
+using TodoApp.Api.Aplication.Endpoints;
+using TodoApp.Api.Features.Todo.SharedTodo;
+using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
 
@@ -23,25 +23,13 @@ public static class GetAllTodo
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var todoItens = await context
-                                    .Todos
-                                    .Skip(page * pageSize)
-                                    .Take(pageSize)
-                                    .Select(t =>
-                                        new TodoItemDto(t.Id,
-                                            t.UserId,
-                                            t.Description,
-                                            t.DueDate,
-                                            t.Labels,
-                                            t.IsCompleted,
-                                            t.CompletedAt,
-                                            t.Priority,
-                                            t.IsArchived,
-                                            t.ArchivedAt,
-                                            t.CreatedAtUtc,
-                                            t.UpdatedAtUtc))
-                                    .AsNoTracking()
-                                    .ToListAsync();
+        List<TodoItemDto> todoItens =
+         await context
+            .Todos
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .ObterDetalhes()
+            .ToListAsync();
 
         if (todoItens.Count == 0)
         {

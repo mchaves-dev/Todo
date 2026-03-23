@@ -1,15 +1,15 @@
 using FluentValidation;
-using TodoApp.Api.Database;
-using TodoApp.Api.Endpoints;
-using TodoApp.Api.Entities;
-using TodoApp.Api.Enums;
-using TodoApp.Api.Extensions;
+using TodoApp.Api.Aplication.Endpoints;
+using TodoApp.Api.Aplication.Extensions;
+using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Domain.Enums;
+using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
 
 public static class CreateTodo
 {
-    public sealed record Request(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string [] labels = null);
+    public sealed record Request(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string[] labels = null);
     public sealed record Response(Guid IdTodoItem, DateTime CreatedAt);
 
     public sealed class Validator : AbstractValidator<Request>

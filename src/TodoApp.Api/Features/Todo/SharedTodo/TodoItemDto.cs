@@ -1,12 +1,12 @@
-using TodoApp.Api.Enums;
+using TodoApp.Api.Domain.Enums;
 
-namespace TodoApp.Api.DTOs.Todo;
+namespace TodoApp.Api.Features.Todo.SharedTodo;
 
 public sealed record TodoItemDto(Guid Id,
         Guid UserId,
         string Description,
         DateTime? DueDate,
-        string [] Labels,
+        string[] Labels,
         bool IsCompleted,
         DateTime? CompletedAt,
         EPriority Priority,

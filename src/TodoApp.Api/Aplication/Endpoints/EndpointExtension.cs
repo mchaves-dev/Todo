@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
-namespace TodoApp.Api.Endpoints;
+namespace TodoApp.Api.Aplication.Endpoints;
 
 internal static class EndpointExtension
 {
@@ -18,7 +18,7 @@ internal static class EndpointExtension
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(assembly);
 
-        ServiceDescriptor [] serviceDescriptors = assembly.DefinedTypes
+        ServiceDescriptor[] serviceDescriptors = assembly.DefinedTypes
             .Where(type => type is
             {
                 IsAbstract: false,

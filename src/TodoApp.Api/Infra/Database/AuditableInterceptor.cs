@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using TodoApp.Api.Entities;
+using TodoApp.Api.Domain.Entities;
 
-namespace TodoApp.Api.Database;
+namespace TodoApp.Api.Infra.Database;
 
 public sealed class AuditableInterceptor : SaveChangesInterceptor
 {
