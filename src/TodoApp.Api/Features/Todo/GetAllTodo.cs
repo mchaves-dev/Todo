@@ -26,7 +26,7 @@ public static class GetAllTodo
         List<TodoItemDto> todoItens =
          await context
             .Todos
-            .Skip(page * pageSize)
+            .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ObterDetalhes()
             .ToListAsync();
