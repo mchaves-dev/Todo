@@ -1,5 +1,6 @@
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
@@ -12,8 +13,13 @@ public static class CompletedTodo
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPatch("todoitem/{id:guid}/completed", Handler)
-                .WithTags("Todo Item");
+            app.MapPatch($"{TodoRoutes.Base}/{{id:guid}}/completed", Handler)
+                .WithTags(TodoRoutes.Tag)
+                .WithName("CompleteTodoItem")
+                .WithSummary("Marca um item de tarefa como concluido")
+                .WithDescription("Atualiza o item para concluido e registra a data de conclusao em UTC.")
+                .Produces(StatusCodes.Status204NoContent)
+                .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }
 
@@ -23,13 +29,17 @@ public static class CompletedTodo
 
         if (todoItem is null)
         {
-            return Results.BadRequest(TodoItemError.NotFound);
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Item de tarefa nao encontrado",
+                detail: TodoItemError.NotFound);
         }
 
-        todoItem.Compreted();
+        todoItem.Complete();
 
         await context.SaveChangesAsync();
 
         return Results.NoContent();
     }
 }
+

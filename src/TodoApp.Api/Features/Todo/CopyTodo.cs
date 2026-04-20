@@ -1,5 +1,6 @@
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
@@ -12,8 +13,13 @@ public static class CopyTodo
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("todoitem/{id:guid}/copy", Handler)
-                .WithTags("Todo Item");
+            app.MapPost($"{TodoRoutes.Base}/{{id:guid}}/copy", Handler)
+                .WithTags(TodoRoutes.Tag)
+                .WithName("CopyTodoItem")
+                .WithSummary("Copia um item de tarefa")
+                .WithDescription("Cria um novo item copiando usuario, descricao, prioridade, vencimento e labels do item informado.")
+                .Produces<Response>(StatusCodes.Status201Created)
+                .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }
 
@@ -23,7 +29,10 @@ public static class CopyTodo
 
         if (todoItem is null)
         {
-            return Results.BadRequest(TodoItemError.NotFound);
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Item de tarefa nao encontrado",
+                detail: TodoItemError.NotFound);
         }
 
         var newTodoItem = todoItem.Clone();
@@ -31,7 +40,8 @@ public static class CopyTodo
         await context.AddAsync(newTodoItem);
         await context.SaveChangesAsync();
 
-        return Results.Ok(new Response(newTodoItem.Id, newTodoItem.CreatedAtUtc));
+        return Results.Created($"{TodoRoutes.Base}/{newTodoItem.Id}", new Response(newTodoItem.Id, newTodoItem.CreatedAtUtc));
     }
 }
+
 

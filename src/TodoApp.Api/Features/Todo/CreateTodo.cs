@@ -3,6 +3,7 @@ using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Aplication.Extensions;
 using TodoApp.Api.Domain.Entities;
 using TodoApp.Api.Domain.Enums;
+using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
@@ -30,8 +31,17 @@ public static class CreateTodo
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("todoitem", Handler)
-                .WithTags("Todo Item");
+            app.MapPost(TodoRoutes.Base, Handler)
+                .WithTags(TodoRoutes.Tag)
+                .WithName("CreateTodoItem")
+                .WithSummary("Cria um item de tarefa")
+                .WithDescription("""
+                    Cria um novo item de tarefa para um usuario.
+                    A descricao deve ter entre 2 e 200 caracteres e a prioridade deve ser um valor valido do enum EPriority.
+                    """)
+                .Accepts<Request>("application/json")
+                .Produces<Response>(StatusCodes.Status201Created)
+                .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }
     }
 
@@ -46,7 +56,7 @@ public static class CreateTodo
 
         if (!validationResult.IsValid)
         {
-            return Results.BadRequest(validationResult.ToFormattedErrorMessages());
+            return Results.ValidationProblem(validationResult.ToDictionary());
         }
 
         var todoItem = new TodoItem(request.userId, request.description, request.priority, request.dueDate, request.labels);
@@ -54,7 +64,7 @@ public static class CreateTodo
         await context.AddAsync(todoItem);
         await context.SaveChangesAsync();
 
-        return Results.Ok(new Response(todoItem.Id, todoItem.CreatedAtUtc));
+        return Results.Created($"{TodoRoutes.Base}/{todoItem.Id}", new Response(todoItem.Id, todoItem.CreatedAtUtc));
     }
 }
 

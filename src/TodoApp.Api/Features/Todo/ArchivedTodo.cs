@@ -1,5 +1,6 @@
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
 namespace TodoApp.Api.Features.Todo;
@@ -12,8 +13,13 @@ public static class ArchivedTodo
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPatch("todoitem/{id:guid}/archived", Handler)
-                .WithTags("Todo Item");
+            app.MapPatch($"{TodoRoutes.Base}/{{id:guid}}/archived", Handler)
+                .WithTags(TodoRoutes.Tag)
+                .WithName("ArchiveTodoItem")
+                .WithSummary("Arquiva um item de tarefa")
+                .WithDescription("Atualiza o item para arquivado e registra a data de arquivamento em UTC.")
+                .Produces(StatusCodes.Status204NoContent)
+                .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }
 
@@ -23,7 +29,10 @@ public static class ArchivedTodo
 
         if (todoItem is null)
         {
-            return Results.BadRequest(TodoItemError.NotFound);
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Item de tarefa nao encontrado",
+                detail: TodoItemError.NotFound);
         }
 
         todoItem.Archived();
@@ -33,3 +42,4 @@ public static class ArchivedTodo
         return Results.NoContent();
     }
 }
+

@@ -12,8 +12,13 @@ public static class GetTodoById
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("todoitem/{id:guid}", Handler)
-                .WithTags("Todo Item");
+            app.MapGet($"{TodoRoutes.Base}/{{id:guid}}", Handler)
+                .WithTags(TodoRoutes.Tag)
+                .WithName("GetTodoItemById")
+                .WithSummary("Consulta um item de tarefa")
+                .WithDescription("Retorna os detalhes de um item de tarefa pelo identificador.")
+                .Produces<TodoItemDto>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }
 
@@ -29,9 +34,13 @@ public static class GetTodoById
 
         if (todoItem is null)
         {
-            return Results.NotFound(TodoItemError.NotFound);
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Item de tarefa nao encontrado",
+                detail: TodoItemError.NotFound);
         }
 
         return Results.Ok(todoItem);
     }
 }
+
