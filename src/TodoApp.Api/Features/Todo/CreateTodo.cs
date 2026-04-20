@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Aplication.Extensions;
 using TodoApp.Api.Domain.Entities;
@@ -10,7 +11,7 @@ namespace TodoApp.Api.Features.Todo;
 
 public static class CreateTodo
 {
-    public sealed record Request(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string[] labels = null);
+    public sealed record Request(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string[]? labels = null);
     public sealed record Response(Guid IdTodoItem, DateTime CreatedAt);
 
     public sealed class Validator : AbstractValidator<Request>
@@ -57,6 +58,26 @@ public static class CreateTodo
         if (!validationResult.IsValid)
         {
             return Results.ValidationProblem(validationResult.ToDictionary());
+        }
+
+        var user = await context.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == request.userId);
+
+        if (user is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["userId"] = ["usuario nao encontrado."]
+            });
+        }
+
+        if (!user.IsActive)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["userId"] = ["usuario inativo nao pode criar tarefas."]
+            });
         }
 
         var todoItem = new TodoItem(request.userId, request.description, request.priority, request.dueDate, request.labels);

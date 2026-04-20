@@ -4,7 +4,7 @@ namespace TodoApp.Api.Domain.Entities;
 
 public sealed class TodoItem : IAuditableEntity
 {
-    public TodoItem(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string[] labels = null)
+    public TodoItem(Guid userId, string description, EPriority priority, DateTime? dueDate = null, string[]? labels = null)
     {
         Id = Guid.NewGuid();
         IsCompleted = false;
@@ -14,7 +14,7 @@ public sealed class TodoItem : IAuditableEntity
         UserId = userId;
         Description = description;
         DueDate = dueDate;
-        Labels = labels;
+        Labels = labels ?? [];
         Priority = priority;
     }
 
@@ -30,6 +30,7 @@ public sealed class TodoItem : IAuditableEntity
     public DateTime? ArchivedAt { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
+    public User User { get; set; } = null!;
 
     public void Complete()
     {

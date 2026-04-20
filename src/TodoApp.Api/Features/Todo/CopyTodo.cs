@@ -19,7 +19,8 @@ public static class CopyTodo
                 .WithSummary("Copia um item de tarefa")
                 .WithDescription("Cria um novo item copiando usuario, descricao, prioridade, vencimento e labels do item informado.")
                 .Produces<Response>(StatusCodes.Status201Created)
-                .ProducesProblem(StatusCodes.Status404NotFound);
+                .ProducesProblem(StatusCodes.Status404NotFound)
+                .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }
     }
 
@@ -33,6 +34,24 @@ public static class CopyTodo
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Item de tarefa nao encontrado",
                 detail: TodoItemError.NotFound);
+        }
+
+        var user = await context.Users.FindAsync(todoItem.UserId);
+
+        if (user is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["userId"] = ["usuario nao encontrado."]
+            });
+        }
+
+        if (!user.IsActive)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["userId"] = ["usuario inativo nao pode criar tarefas."]
+            });
         }
 
         var newTodoItem = todoItem.Clone();
