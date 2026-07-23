@@ -17,7 +17,9 @@ public static class GetTodoById
                 .WithName("GetTodoItemById")
                 .WithSummary("Consulta um item de tarefa")
                 .WithDescription("Retorna os detalhes de um item de tarefa pelo identificador.")
+                .RequireAuthorization()
                 .Produces<TodoItemDto>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }

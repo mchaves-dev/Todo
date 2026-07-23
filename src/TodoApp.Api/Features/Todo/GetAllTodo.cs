@@ -23,7 +23,9 @@ public static class GetAllTodo
                     Retorna uma pagina de itens de tarefa.
                     Use page e pageSize para controlar a paginacao. Ambos devem ser maiores que zero.
                     """)
+                .RequireAuthorization()
                 .Produces<List<TodoItemDto>>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }
     }

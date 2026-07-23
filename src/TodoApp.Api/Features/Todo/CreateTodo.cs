@@ -4,6 +4,7 @@ using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Aplication.Extensions;
 using TodoApp.Api.Domain.Entities;
 using TodoApp.Api.Domain.Enums;
+using TodoApp.Api.Features.Todo.Realtime;
 using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
@@ -41,14 +42,17 @@ public static class CreateTodo
                     A descricao deve ter entre 2 e 200 caracteres e a prioridade deve ser um valor valido do enum EPriority.
                     """)
                 .Accepts<Request>("application/json")
+                .RequireAuthorization()
                 .Produces<Response>(StatusCodes.Status201Created)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }
     }
 
     internal static async Task<IResult> Handler(Request request,
         AppDbContext context,
-        IValidator<Request> validator)
+        IValidator<Request> validator,
+        ITodoRealtimeNotifier realtimeNotifier)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(validator);
@@ -84,6 +88,7 @@ public static class CreateTodo
 
         await context.AddAsync(todoItem);
         await context.SaveChangesAsync();
+        await realtimeNotifier.NotifyChangedAsync();
 
         return Results.Created($"{TodoRoutes.Base}/{todoItem.Id}", new Response(todoItem.Id, todoItem.CreatedAtUtc));
     }

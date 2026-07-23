@@ -16,7 +16,9 @@ public static class GetUserPreferences
                 .WithName("GetUserPreferences")
                 .WithSummary("Consulta preferencias do usuario")
                 .WithDescription("Retorna as preferencias pessoais de um usuario.")
+                .RequireAuthorization()
                 .Produces<UserPreferenceDto>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }

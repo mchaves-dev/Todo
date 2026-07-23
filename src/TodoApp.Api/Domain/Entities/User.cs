@@ -6,14 +6,16 @@ public sealed class User : IAuditableEntity
     {
         Name = string.Empty;
         Email = string.Empty;
+        PasswordHash = string.Empty;
         Preference = null!;
     }
 
-    public User(string name, string email)
+    public User(string name, string email, string passwordHash)
     {
         Id = Guid.NewGuid();
         Name = name;
         Email = email;
+        PasswordHash = passwordHash;
         IsActive = true;
         Preference = UserPreference.CreateDefault(Id);
     }
@@ -21,11 +23,13 @@ public sealed class User : IAuditableEntity
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
+    public string PasswordHash { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
     public UserPreference Preference { get; set; }
     public ICollection<TodoItem> Todos { get; } = [];
+    public ICollection<RefreshToken> RefreshTokens { get; } = [];
 
     public void Update(string? name, string? email, bool? isActive)
     {

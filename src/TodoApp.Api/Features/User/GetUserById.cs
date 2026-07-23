@@ -16,7 +16,9 @@ public static class GetUserById
                 .WithName("GetUserById")
                 .WithSummary("Consulta um usuario")
                 .WithDescription("Retorna os dados de um usuario pelo identificador.")
+                .RequireAuthorization()
                 .Produces<UserDto>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }

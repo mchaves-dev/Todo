@@ -39,7 +39,9 @@ public static class UpdateUser
                 .WithSummary("Atualiza um usuario")
                 .WithDescription("Atualiza nome, e-mail e status ativo de um usuario.")
                 .Accepts<Request>("application/json")
+                .RequireAuthorization()
                 .Produces(StatusCodes.Status204NoContent)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .ProducesProblem(StatusCodes.Status409Conflict)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);

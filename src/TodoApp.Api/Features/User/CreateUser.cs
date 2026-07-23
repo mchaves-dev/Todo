@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using TodoApp.Api.Aplication.Auth;
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Features.Users.SharedUser;
 using TodoApp.Api.Infra.Database;
@@ -8,7 +9,7 @@ namespace TodoApp.Api.Features.Users;
 
 public static class CreateUser
 {
-    public sealed record Request(string name, string email);
+    public sealed record Request(string name, string email, string password);
     public sealed record Response(Guid IdUser, DateTime CreatedAt);
 
     public sealed class Validator : AbstractValidator<Request>
@@ -25,6 +26,12 @@ public static class CreateUser
                 .WithMessage("deve ser informado.")
                 .MaximumLength(180)
                 .EmailAddress();
+
+            RuleFor(x => x.password)
+                .Must(value => !string.IsNullOrWhiteSpace(value))
+                .WithMessage("deve ser informada.")
+                .MinimumLength(8)
+                .MaximumLength(100);
         }
     }
 
@@ -47,11 +54,13 @@ public static class CreateUser
     internal static async Task<IResult> Handler(
         Request request,
         AppDbContext context,
-        IValidator<Request> validator)
+        IValidator<Request> validator,
+        IPasswordHasher passwordHasher)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(passwordHasher);
 
         var validationResult = await validator.ValidateAsync(request);
 
@@ -76,7 +85,7 @@ public static class CreateUser
                 detail: UserErrors.EmailAlreadyExists);
         }
 
-        var user = new Domain.Entities.User(request.name.Trim(), email);
+        var user = new Domain.Entities.User(request.name.Trim(), email, passwordHasher.Hash(request.password));
 
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();

@@ -20,8 +20,27 @@ O Swagger contem:
 ## 3. Base de Rotas
 Todos os endpoints atuais usam base versionada:
 - `/api/v1/todoitems`
+- `/api/v1/users`
+- `/api/v1/auth`
 
 ## 4. Funcionalidades Implementadas
+
+### 4.0 Autenticacao
+- Endpoint: `POST /api/v1/auth/login`
+- Objetivo: autenticar usuario ativo por e-mail e senha.
+- Saidas:
+  - `200 OK` com `accessToken`, `refreshToken`, expiracoes e `tokenType`
+  - `400 BadRequest` para entrada invalida
+  - `401 Unauthorized` para credenciais invalidas
+
+- Endpoint: `POST /api/v1/auth/refresh`
+- Objetivo: renovar o par de tokens usando refresh token ativo.
+- Saidas:
+  - `200 OK` com novo par de tokens
+  - `400 BadRequest` para entrada invalida
+  - `401 Unauthorized` para refresh token invalido, expirado ou revogado
+
+As rotas de tarefas exigem `Authorization: Bearer {accessToken}`.
 
 ### 4.1 Criar tarefa
 - Endpoint: `POST /api/v1/todoitems`
@@ -126,5 +145,5 @@ Campos retornados nas consultas:
 - Sem exclusao de tarefa.
 - Sem filtros por status, prioridade, labels ou usuario.
 - Sem ordenacao configuravel na listagem.
-- Sem autenticacao/autorizacao.
+- Autenticacao implementada, mas ainda sem perfis de acesso ou permissoes granulares.
 - Persistencia atual em memoria; os dados nao sobrevivem ao reinicio da aplicacao.

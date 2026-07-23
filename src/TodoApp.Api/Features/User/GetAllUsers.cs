@@ -18,7 +18,9 @@ public static class GetAllUsers
                 .WithName("GetUsers")
                 .WithSummary("Lista usuarios")
                 .WithDescription("Retorna uma pagina de usuarios cadastrados.")
+                .RequireAuthorization()
                 .Produces<List<UserDto>>(StatusCodes.Status200OK)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status400BadRequest)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }

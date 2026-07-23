@@ -1,11 +1,45 @@
 @Todo.Api_HostAddress = http://localhost:5084
 @TodoId = 00000000-0000-0000-0000-000000000000
+@UserId = 00000000-0000-0000-0000-000000000000
+@AccessToken = cole-o-access-token-aqui
+@RefreshToken = cole-o-refresh-token-aqui
 
-POST {{Todo.Api_HostAddress}}/api/v1/todoitems
+POST {{Todo.Api_HostAddress}}/api/v1/users
 Content-Type: application/json
 
 {
-  "userId": "11111111-1111-1111-1111-111111111111",
+  "name": "Maria Silva",
+  "email": "maria@example.com",
+  "password": "Senha1234"
+}
+
+###
+
+POST {{Todo.Api_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "maria@example.com",
+  "password": "Senha1234"
+}
+
+###
+
+POST {{Todo.Api_HostAddress}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{RefreshToken}}"
+}
+
+###
+
+POST {{Todo.Api_HostAddress}}/api/v1/todoitems
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+  "userId": "{{UserId}}",
   "description": "Pagar conta de luz",
   "priority": 1,
   "dueDate": "2026-04-30T00:00:00Z",
@@ -16,20 +50,25 @@ Content-Type: application/json
 
 GET {{Todo.Api_HostAddress}}/api/v1/todoitems?page=1&pageSize=5
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 GET {{Todo.Api_HostAddress}}/api/v1/todoitems/{{TodoId}}
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 PATCH {{Todo.Api_HostAddress}}/api/v1/todoitems/{{TodoId}}/completed
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 PATCH {{Todo.Api_HostAddress}}/api/v1/todoitems/{{TodoId}}/archived
+Authorization: Bearer {{AccessToken}}
 
 ###
 
 POST {{Todo.Api_HostAddress}}/api/v1/todoitems/{{TodoId}}/copy
+Authorization: Bearer {{AccessToken}}

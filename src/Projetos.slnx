@@ -2,4 +2,5 @@
   <Folder Name="/Todo/">
     <Project Path="TodoApp.Api/TodoApp.Api.csproj" Id="5b7c2759-c584-4ba6-bf68-dba15ee31987" />
   </Folder>
+  <Project Path="TodoApp.Web/TodoApp.Web.csproj" />
 </Solution>

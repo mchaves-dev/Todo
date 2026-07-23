@@ -1,0 +1,127 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject AuthSession Auth
+@inject NavigationManager Navigation
+
+<MudThemeProvider Theme="@Theme" IsDarkMode="@isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Class="workspace">
+    <aside class="app-rail">
+        <MudLink Href="/" Class="rail-brand" Underline="Underline.None">
+            <span class="rail-brand__mark">TF</span>
+            <span class="rail-brand__text">Todo Flow</span>
+        </MudLink>
+
+        <nav class="rail-nav" aria-label="Navegacao principal">
+            <MudTooltip Text="Inicio" Placement="Placement.Right">
+                <MudIconButton Href="/" Icon="@Icons.Material.Outlined.SpaceDashboard" Color="Color.Inherit" Class="rail-action" />
+            </MudTooltip>
+            @if (Auth.IsAuthenticated)
+            {
+                <MudTooltip Text="Painel" Placement="Placement.Right">
+                    <MudIconButton Href="/dashboard" Icon="@Icons.Material.Outlined.ViewTimeline" Color="Color.Inherit" Class="rail-action" />
+                </MudTooltip>
+            }
+        </nav>
+
+        <div class="rail-bottom">
+            <ThemeToggle IsDarkMode="@isDarkMode" IsDarkModeChanged="ChangeThemeAsync" />
+            @if (Auth.IsAuthenticated)
+            {
+                <MudTooltip Text="Sair" Placement="Placement.Right">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Logout" Color="Color.Inherit" OnClick="SignOutAsync" Class="rail-action" />
+                </MudTooltip>
+            }
+        </div>
+    </aside>
+
+    <MudMainContent Class="app-main">
+        <header class="top-line">
+            <MudText Typo="Typo.caption" Class="top-line__context">Planejamento pessoal</MudText>
+            @if (Auth.IsAuthenticated)
+            {
+                <MudChip T="string" Icon="@Icons.Material.Outlined.Person" Color="Color.Primary" Variant="Variant.Outlined">@Auth.User?.Name</MudChip>
+            }
+        </header>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool isDarkMode;
+
+    private MudTheme Theme { get; } = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#1D4ED8",
+            Secondary = "#0F766E",
+            Tertiary = "#B45309",
+            Background = "#F4F7FB",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#0F172A",
+            DrawerBackground = "#FFFFFF",
+            TextPrimary = "#0F172A",
+            TextSecondary = "#536173",
+            LinesDefault = "#DDE5EF"
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#7DD3FC",
+            Secondary = "#5EEAD4",
+            Tertiary = "#FDBA74",
+            Background = "#0E1116",
+            Surface = "#171C24",
+            AppbarBackground = "#171C24",
+            AppbarText = "#F8FAFC",
+            DrawerBackground = "#171C24",
+            TextPrimary = "#F8FAFC",
+            TextSecondary = "#B8C4D4",
+            LinesDefault = "#2B3543"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "8px"
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = ["Inter", "Segoe UI", "Arial", "sans-serif"]
+            }
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.InitializeAsync();
+        Auth.Changed += OnAuthChanged;
+    }
+
+    public void Dispose()
+    {
+        Auth.Changed -= OnAuthChanged;
+    }
+
+    private Task ChangeThemeAsync(bool value)
+    {
+        isDarkMode = value;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task SignOutAsync()
+    {
+        await Auth.SignOutAsync();
+        Navigation.NavigateTo("/");
+    }
+
+    private void OnAuthChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

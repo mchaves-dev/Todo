@@ -3,7 +3,7 @@
 ## 1. Objetivo
 Adicionar suporte a usuarios e preferencias pessoais na Todo API.
 
-Nesta etapa, o escopo nao inclui multi-tenant, autenticacao completa, projetos ou controle granular de acessos.
+Nesta etapa, o escopo nao inclui multi-tenant, projetos ou controle granular de acessos. Autenticacao com token e refresh token foi adicionada em documento proprio.
 
 ## 2. Contexto
 A API atual permite criar e consultar tarefas usando `userId` informado no corpo da requisicao.
@@ -14,6 +14,7 @@ Com a criacao formal de usuarios, o sistema passa a ter uma entidade propria par
 
 ### Incluido
 - Cadastro de usuarios.
+- Cadastro de senha do usuario.
 - Consulta de usuarios.
 - Consulta de usuario por id.
 - Atualizacao de dados basicos do usuario.
@@ -23,7 +24,6 @@ Com a criacao formal de usuarios, o sistema passa a ter uma entidade propria par
 
 ### Fora de escopo
 - Multi-tenant.
-- Login, senha, JWT ou Identity.
 - Perfis de acesso e permissoes.
 - Projetos.
 - Convites de usuario.
@@ -39,6 +39,7 @@ Campos:
 - `Id`: identificador unico.
 - `Name`: nome do usuario.
 - `Email`: e-mail unico.
+- `PasswordHash`: hash da senha do usuario.
 - `IsActive`: indica se o usuario esta ativo.
 - `CreatedAtUtc`: data de criacao em UTC.
 - `UpdatedAtUtc`: data da ultima atualizacao em UTC.
@@ -48,6 +49,7 @@ Regras:
 - `Email` e obrigatorio.
 - `Email` deve ter formato valido.
 - `Email` deve ser unico.
+- Senha e obrigatoria no cadastro e armazenada apenas como hash.
 - Usuario nasce ativo.
 - Usuario inativo nao deve criar novas tarefas.
 
@@ -90,6 +92,7 @@ Base de rotas:
 Request:
 - `name`: obrigatorio.
 - `email`: obrigatorio.
+- `password`: obrigatoria, 8 a 100 caracteres.
 
 Respostas:
 - `201 Created` com `{ idUser, createdAt }`.
@@ -191,6 +194,7 @@ Regras:
 Usuario:
 - `name`: obrigatorio, 2 a 120 caracteres.
 - `email`: obrigatorio, formato valido, maximo 180 caracteres.
+- `password`: obrigatoria no cadastro, 8 a 100 caracteres.
 
 Preferencias:
 - `theme`: valores aceitos: `System`, `Light`, `Dark`.
@@ -202,11 +206,14 @@ Preferencias:
 Adicionar ao `AppDbContext`:
 - `DbSet<User>`
 - `DbSet<UserPreference>`
+- `DbSet<RefreshToken>`
 
 Mapeamentos EF Core:
 - indice unico para `User.Email`.
+- `User.PasswordHash` obrigatorio.
 - relacionamento `User` 1:1 `UserPreference`.
 - relacionamento `User` 1:N `TodoItem`.
+- relacionamento `User` 1:N `RefreshToken`.
 
 ## 10. Swagger/OpenAPI
 Todos os novos endpoints devem conter:
@@ -220,6 +227,7 @@ Todos os novos endpoints devem conter:
 
 ## 11. Criterios De Aceite
 - Deve ser possivel criar usuario com preferencias padrao.
+- Deve ser possivel criar usuario com senha.
 - Nao deve ser possivel criar dois usuarios com o mesmo e-mail.
 - Deve ser possivel listar usuarios com paginacao.
 - Deve ser possivel consultar usuario por id.

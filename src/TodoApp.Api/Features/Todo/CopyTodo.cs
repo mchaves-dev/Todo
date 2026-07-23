@@ -1,5 +1,6 @@
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Features.Todo.Realtime;
 using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
@@ -18,13 +19,15 @@ public static class CopyTodo
                 .WithName("CopyTodoItem")
                 .WithSummary("Copia um item de tarefa")
                 .WithDescription("Cria um novo item copiando usuario, descricao, prioridade, vencimento e labels do item informado.")
+                .RequireAuthorization()
                 .Produces<Response>(StatusCodes.Status201Created)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }
     }
 
-    internal static async Task<IResult> Handler(Guid id, AppDbContext context)
+    internal static async Task<IResult> Handler(Guid id, AppDbContext context, ITodoRealtimeNotifier realtimeNotifier)
     {
         var todoItem = await context.Todos.FindAsync(id);
 
@@ -58,6 +61,7 @@ public static class CopyTodo
 
         await context.AddAsync(newTodoItem);
         await context.SaveChangesAsync();
+        await realtimeNotifier.NotifyChangedAsync();
 
         return Results.Created($"{TodoRoutes.Base}/{newTodoItem.Id}", new Response(newTodoItem.Id, newTodoItem.CreatedAtUtc));
     }

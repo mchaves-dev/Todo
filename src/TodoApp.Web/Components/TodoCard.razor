@@ -1,0 +1,82 @@
+<MudPaper Class="@CardClass" Elevation="0">
+    <div class="todo-card__header">
+        <div class="todo-card__status">
+            <MudCheckBox T="bool"
+                         Value="@Item.IsCompleted"
+                         ValueChanged="@(_ => OnComplete.InvokeAsync(Item))"
+                         Disabled="@Item.IsCompleted"
+                         Color="Color.Success" />
+            <MudText Typo="Typo.caption" Class="muted">@StatusText</MudText>
+        </div>
+        <MudChip T="string" Size="Size.Small" Color="@PriorityColor" Variant="Variant.Outlined">@PriorityText</MudChip>
+    </div>
+
+    <MudText Typo="Typo.subtitle1" Class="todo-card__title">@Item.Description</MudText>
+
+    <div class="todo-card__meta">
+        @if (Item.DueDate is not null)
+        {
+            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Event" Variant="Variant.Outlined">
+                @Item.DueDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
+            </MudChip>
+        }
+
+        @if (Item.IsArchived)
+        {
+            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Archive" Color="Color.Warning">Arquivada</MudChip>
+        }
+    </div>
+
+    @if (Item.Labels.Length > 0)
+    {
+        <div class="todo-card__labels">
+            @foreach (string label in Item.Labels)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@label</MudChip>
+            }
+        </div>
+    }
+
+    <div class="todo-card__actions">
+        <MudTooltip Text="Copiar tarefa">
+            <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="@(() => OnCopy.InvokeAsync(Item))" />
+        </MudTooltip>
+        <MudTooltip Text="Arquivar tarefa">
+            <MudIconButton Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" OnClick="@(() => OnArchive.InvokeAsync(Item))" Disabled="@Item.IsArchived" />
+        </MudTooltip>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public TodoItem Item { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<TodoItem> OnComplete { get; set; }
+
+    [Parameter]
+    public EventCallback<TodoItem> OnArchive { get; set; }
+
+    [Parameter]
+    public EventCallback<TodoItem> OnCopy { get; set; }
+
+    private string CardClass => Item.IsCompleted ? "todo-card todo-card--done" : "todo-card";
+
+    private Color PriorityColor => Item.Priority switch
+    {
+        TodoPriority.High => Color.Error,
+        TodoPriority.Medium => Color.Warning,
+        TodoPriority.Low => Color.Info,
+        _ => Color.Default
+    };
+
+    private string PriorityText => Item.Priority switch
+    {
+        TodoPriority.High => "Alta",
+        TodoPriority.Medium => "Media",
+        TodoPriority.Low => "Baixa",
+        _ => "Sem prioridade"
+    };
+
+    private string StatusText => Item.IsCompleted ? "Feita" : "Aberta";
+}

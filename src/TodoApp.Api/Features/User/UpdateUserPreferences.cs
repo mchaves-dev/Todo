@@ -49,7 +49,9 @@ public static class UpdateUserPreferences
                 .WithSummary("Atualiza preferencias do usuario")
                 .WithDescription("Atualiza parcialmente as preferencias pessoais de um usuario.")
                 .Accepts<Request>("application/json")
+                .RequireAuthorization()
                 .Produces(StatusCodes.Status204NoContent)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound)
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest);
         }

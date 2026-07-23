@@ -13,6 +13,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         entity.HasKey(x => x.Id);
         entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
         entity.Property(x => x.Email).HasMaxLength(180).IsRequired();
+        entity.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();
         entity.Property(x => x.IsActive).IsRequired();
         entity.Property(x => x.CreatedAtUtc).IsRequired();
         entity.Property(x => x.UpdatedAtUtc);
@@ -25,6 +26,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         entity.HasMany(x => x.Todos)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId)
+            .IsRequired();
+
+        entity.HasMany(x => x.RefreshTokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)
             .IsRequired();

@@ -16,6 +16,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<TodoItem> Todos { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<UserPreference> UserPreferences { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

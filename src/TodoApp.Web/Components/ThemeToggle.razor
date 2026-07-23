@@ -1,0 +1,22 @@
+<MudTooltip Text="@Tooltip">
+    <MudIconButton Icon="@Icon" Color="Color.Inherit" OnClick="ToggleAsync" />
+</MudTooltip>
+
+@code {
+    [Parameter]
+    public bool IsDarkMode { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsDarkModeChanged { get; set; }
+
+    private string Icon => IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode;
+
+    private string Tooltip => IsDarkMode ? "Usar tema claro" : "Usar tema escuro";
+
+    private async Task ToggleAsync()
+    {
+        IsDarkMode = !IsDarkMode;
+        await IsDarkModeChanged.InvokeAsync(IsDarkMode);
+    }
+}
+

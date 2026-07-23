@@ -1,5 +1,6 @@
 using TodoApp.Api.Aplication.Endpoints;
 using TodoApp.Api.Domain.Entities;
+using TodoApp.Api.Features.Todo.Realtime;
 using TodoApp.Api.Features.Todo.SharedTodo;
 using TodoApp.Api.Infra.Database;
 
@@ -18,12 +19,14 @@ public static class CompletedTodo
                 .WithName("CompleteTodoItem")
                 .WithSummary("Marca um item de tarefa como concluido")
                 .WithDescription("Atualiza o item para concluido e registra a data de conclusao em UTC.")
+                .RequireAuthorization()
                 .Produces(StatusCodes.Status204NoContent)
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
                 .ProducesProblem(StatusCodes.Status404NotFound);
         }
     }
 
-    internal static async Task<IResult> Handler(Guid id, AppDbContext context)
+    internal static async Task<IResult> Handler(Guid id, AppDbContext context, ITodoRealtimeNotifier realtimeNotifier)
     {
         var todoItem = await context.Todos.FindAsync(id);
 
@@ -38,6 +41,7 @@ public static class CompletedTodo
         todoItem.Complete();
 
         await context.SaveChangesAsync();
+        await realtimeNotifier.NotifyChangedAsync();
 
         return Results.NoContent();
     }

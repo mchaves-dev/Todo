@@ -1,0 +1,131 @@
+@page "/"
+@inject AuthSession Auth
+@inject TodoApiClient Api
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Todo Flow</PageTitle>
+
+<div class="home-shell">
+    <section class="home-hero">
+        <div class="home-hero__copy">
+            <MudChip T="string" Icon="@Icons.Material.Outlined.Bolt" Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4">
+                Tempo real para equipes pequenas e rotina pessoal
+            </MudChip>
+            <MudText Typo="Typo.h1" Class="home-title">Seu dia em uma mesa de comando limpa.</MudText>
+            <MudText Typo="Typo.body1" Class="home-subtitle">
+                Tarefas, prioridades e vencimentos ficam em uma interface calma, escaneavel e sincronizada.
+            </MudText>
+            <div class="home-proof">
+                <span><MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Size="Size.Small" /> Tema claro e escuro</span>
+                <span><MudIcon Icon="@Icons.Material.Outlined.Sync" Size="Size.Small" /> Atualizacao em tempo real</span>
+                <span><MudIcon Icon="@Icons.Material.Outlined.DatasetLinked" Size="Size.Small" /> API integrada</span>
+            </div>
+        </div>
+
+        <MudPaper Class="auth-panel glass-panel" Elevation="0">
+            <div class="auth-panel__header">
+                <MudText Typo="Typo.h5">Acesse seu fluxo</MudText>
+                <MudText Typo="Typo.body2" Class="muted">Entre ou crie uma conta para continuar.</MudText>
+            </div>
+            <MudTabs Rounded="true" Elevation="0" ActivePanelIndex="@activeTab" ActivePanelIndexChanged="value => activeTab = value">
+                <MudTabPanel Text="Entrar" Icon="@Icons.Material.Outlined.Login">
+                    <MudForm @ref="loginForm">
+                        <MudTextField @bind-Value="loginEmail" Label="E-mail" InputType="InputType.Email" Required="true" Margin="Margin.Normal" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="loginPassword" Label="Senha" InputType="InputType.Password" Required="true" Margin="Margin.Normal" Variant="Variant.Outlined" />
+                        <MudButton FullWidth="true" Color="Color.Primary" Variant="Variant.Filled" OnClick="LoginAsync" Disabled="@busy" Class="mt-4">
+                            Entrar
+                        </MudButton>
+                    </MudForm>
+                </MudTabPanel>
+                <MudTabPanel Text="Criar conta" Icon="@Icons.Material.Outlined.PersonAdd">
+                    <MudForm @ref="registerForm">
+                        <MudTextField @bind-Value="name" Label="Nome" Required="true" Margin="Margin.Normal" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="registerEmail" Label="E-mail" InputType="InputType.Email" Required="true" Margin="Margin.Normal" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="registerPassword" Label="Senha" InputType="InputType.Password" Required="true" Margin="Margin.Normal" Variant="Variant.Outlined" HelperText="Minimo de 8 caracteres" />
+                        <MudButton FullWidth="true" Color="Color.Secondary" Variant="Variant.Filled" OnClick="RegisterAsync" Disabled="@busy" Class="mt-4">
+                            Criar e entrar
+                        </MudButton>
+                    </MudForm>
+                </MudTabPanel>
+            </MudTabs>
+        </MudPaper>
+    </section>
+</div>
+
+@code {
+    private MudForm? loginForm;
+    private MudForm? registerForm;
+    private int activeTab;
+    private bool busy;
+    private string loginEmail = string.Empty;
+    private string loginPassword = string.Empty;
+    private string name = string.Empty;
+    private string registerEmail = string.Empty;
+    private string registerPassword = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.InitializeAsync();
+
+        if (Auth.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        await loginForm!.ValidateAsync();
+
+        if (!loginForm.IsValid)
+        {
+            return;
+        }
+
+        await RunAsync(async () =>
+        {
+            AuthTokens tokens = await Api.LoginAsync(loginEmail, loginPassword);
+            await Auth.SignInAsync(tokens);
+            Snackbar.Add("Sessao iniciada.", Severity.Success);
+            Navigation.NavigateTo("/dashboard");
+        });
+    }
+
+    private async Task RegisterAsync()
+    {
+        await registerForm!.ValidateAsync();
+
+        if (!registerForm.IsValid)
+        {
+            return;
+        }
+
+        await RunAsync(async () =>
+        {
+            await Api.CreateUserAsync(name, registerEmail, registerPassword);
+            AuthTokens tokens = await Api.LoginAsync(registerEmail, registerPassword);
+            await Auth.SignInAsync(tokens);
+            Snackbar.Add("Conta criada com sucesso.", Severity.Success);
+            Navigation.NavigateTo("/dashboard");
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+
+        try
+        {
+            await action();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

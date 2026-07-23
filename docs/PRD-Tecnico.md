@@ -33,6 +33,7 @@ Os endpoints usam metadados OpenAPI diretamente no mapeamento Minimal API:
 - Banco atual: `Microsoft.EntityFrameworkCore.InMemory` com database `mem`
 - Documentacao: OpenAPI + Swagger (`Swashbuckle.AspNetCore`)
 - Validacao: `FluentValidation`
+- Autenticacao: esquema Bearer proprio com token assinado por HMAC e refresh token persistido com hash
 - Resultado HTTP: `IResult`
 
 ## 4. Estrutura do Projeto
@@ -46,6 +47,8 @@ Pastas principais:
 - `Aplication/Extensions`: extensoes de validacao e paginacao
 - `Features/Todo`: endpoints organizados por caso de uso
 - `Features/Todo/SharedTodo`: rotas, DTOs e queries compartilhadas
+- `Features/Auth`: login e renovacao de tokens
+- `Aplication/Auth`: hashing de senha, emissao/validacao de tokens e handler de autenticacao
 
 ## 5. Registro de Endpoints
 O projeto usa endpoints por feature:
@@ -58,17 +61,29 @@ Essa abordagem mantem o contrato HTTP proximo ao caso de uso.
 ## 6. Rotas e Versionamento
 Base versionada:
 - `/api/v1/todoitems`
+- `/api/v1/users`
+- `/api/v1/auth`
 
 Rotas atuais:
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
 - `POST /api/v1/todoitems`
 - `GET /api/v1/todoitems`
 - `GET /api/v1/todoitems/{id}`
 - `PATCH /api/v1/todoitems/{id}/completed`
 - `PATCH /api/v1/todoitems/{id}/archived`
 - `POST /api/v1/todoitems/{id}/copy`
+- `POST /api/v1/users`
+- `GET /api/v1/users`
+- `GET /api/v1/users/{id}`
+- `PATCH /api/v1/users/{id}`
+- `GET /api/v1/users/{id}/preferences`
+- `PATCH /api/v1/users/{id}/preferences`
 
-Tag Swagger compartilhada:
+Tags Swagger:
+- `Auth`
 - `Todo Item`
+- `User`
 
 ## 7. Contratos HTTP
 
@@ -82,6 +97,7 @@ Tag Swagger compartilhada:
 - Entrada invalida retorna `400 BadRequest` com `HttpValidationProblemDetails`.
 - Paginacao invalida retorna `400 BadRequest` com `HttpValidationProblemDetails`.
 - Item inexistente retorna `404 NotFound` com `ProblemDetails`.
+- Rotas protegidas sem token valido retornam `401 Unauthorized`.
 
 Mensagens atuais:
 - Nao encontrado: `Item de tarefa nao encontrado.`
@@ -95,7 +111,18 @@ Validador `CreateTodo.Validator`:
 - `description`: obrigatorio, tamanho entre 2 e 200
 - `priority`: deve ser valor valido do enum
 
-### 8.2 Paginacao
+### 8.2 Autenticacao
+Validador `CreateUser.Validator`:
+- `password`: obrigatoria, tamanho entre 8 e 100
+
+Validador `Login.Validator`:
+- `email`: obrigatorio, formato valido
+- `password`: obrigatoria
+
+Validador `RefreshToken.Validator`:
+- `refreshToken`: obrigatorio
+
+### 8.3 Paginacao
 Validacao centralizada em `PaginationExtensions.ValidatePagination(page, pageSize)`:
 - `page > 0`
 - `pageSize > 0`
@@ -138,13 +165,27 @@ Enum `EPriority`:
 - `Medium = 2`
 - `Low = 3`
 
+Entidade `User` inclui `PasswordHash` e relacionamento com `RefreshToken`.
+
+Entidade `RefreshToken`:
+- `Id`
+- `UserId`
+- `TokenHash`
+- `ExpiresAtUtc`
+- `RevokedAtUtc`
+- `CreatedAtUtc`
+- `UpdatedAtUtc`
+
 ## 10. Auditoria e Persistencia
 - `AuditableInterceptor` e registrado como singleton.
 - O `DbContext` usa banco em memoria chamado `mem`.
 - Dados nao persistem entre reinicios da aplicacao.
+- Refresh tokens tambem usam a persistencia atual em memoria.
 
 ## 11. Observacoes Tecnicas
 - O Swagger e habilitado apenas em ambiente `Development`.
-- Nao ha autenticacao/autorizacao no estado atual.
+- Autenticacao e registrada com `UseAuthentication()` e `UseAuthorization()`.
+- Rotas de login, refresh e cadastro de usuario aceitam acesso anonimo.
+- Rotas de tarefas e de consulta/atualizacao de usuarios exigem `Authorization: Bearer {accessToken}`.
 - Os schemas do Swagger usam nomes completos para evitar conflito entre tipos aninhados com o mesmo nome.
 - Os endpoints de mudanca de estado sao idempotentes pela regra da entidade.

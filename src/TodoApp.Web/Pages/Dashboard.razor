@@ -1,0 +1,260 @@
+@page "/dashboard"
+@implements IAsyncDisposable
+@inject AuthSession Auth
+@inject TodoApiClient Api
+@inject TodoRealtimeClient Realtime
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Painel - Todo Flow</PageTitle>
+
+<div class="dashboard">
+    <section class="dashboard-hero surface-panel">
+        <div>
+            <MudText Typo="Typo.overline" Color="Color.Primary">Painel em tempo real</MudText>
+            <MudText Typo="Typo.h2" Class="dashboard-title">Ola, @Auth.User?.Name</MudText>
+            <MudText Typo="Typo.body1" Class="muted">Priorize o que importa hoje e mantenha o restante em segundo plano.</MudText>
+        </div>
+        <div class="hero-actions">
+            <MudChip T="string" Icon="@ConnectionIcon" Color="@ConnectionColor" Variant="Variant.Outlined">
+                @ConnectionText
+            </MudChip>
+            <MudTooltip Text="Recarregar">
+                <MudIconButton Icon="@Icons.Material.Outlined.Refresh" Color="Color.Primary" OnClick="LoadAsync" />
+            </MudTooltip>
+        </div>
+    </section>
+
+    <div class="stats-grid">
+        <StatCard Label="Abertas" Value="@GetOpenTodos().Count.ToString()" Icon="@Icons.Material.Outlined.RadioButtonUnchecked" Color="Color.Primary" />
+        <StatCard Label="Concluidas" Value="@GetDoneTodos().Count.ToString()" Icon="@Icons.Material.Outlined.TaskAlt" Color="Color.Success" />
+        <StatCard Label="Arquivadas" Value="@GetArchivedTodos().Count.ToString()" Icon="@Icons.Material.Outlined.Archive" Color="Color.Warning" />
+        <StatCard Label="Alta prioridade" Value="@GetHighPriorityCount().ToString()" Icon="@Icons.Material.Outlined.PriorityHigh" Color="Color.Error" />
+    </div>
+
+    <MudPaper Class="create-panel surface-panel" Elevation="0">
+        <div class="create-panel__heading">
+            <div>
+                <MudText Typo="Typo.h5">Capturar tarefa</MudText>
+                <MudText Typo="Typo.body2" Class="muted">Comece pela descricao; os detalhes refinam a prioridade.</MudText>
+            </div>
+            <MudSwitch T="bool" @bind-Value="showArchived" Color="Color.Secondary" Label="Arquivadas" />
+        </div>
+        <div class="task-composer">
+            <MudForm @ref="todoForm">
+                <div class="composer-grid">
+                    <MudTextField @bind-Value="description" Label="Descricao" Required="true" Counter="200" MaxLength="200" Lines="2" Margin="Margin.Dense" Variant="Variant.Outlined" Class="composer-description" />
+                    <MudSelect T="TodoPriority" @bind-Value="priority" Label="Prioridade" Margin="Margin.Dense" Variant="Variant.Outlined">
+                        <MudSelectItem Value="TodoPriority.High">Alta</MudSelectItem>
+                        <MudSelectItem Value="TodoPriority.Medium">Media</MudSelectItem>
+                        <MudSelectItem Value="TodoPriority.Low">Baixa</MudSelectItem>
+                        <MudSelectItem Value="TodoPriority.None">Sem prioridade</MudSelectItem>
+                    </MudSelect>
+                    <MudDatePicker @bind-Date="dueDate" Label="Vencimento" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                    <MudTextField @bind-Value="labelsText" Label="Labels" HelperText="Separe por virgulas" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateTodoAsync" Disabled="@busy" Class="composer-submit">
+                        Adicionar
+                    </MudButton>
+                </div>
+            </MudForm>
+        </div>
+    </MudPaper>
+
+    <section class="board">
+        <div class="lane">
+            <div class="lane__header">
+                <MudText Typo="Typo.h6">Agora</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@GetOpenTodos().Count</MudChip>
+            </div>
+                @if (loading)
+                {
+                    <MudSkeleton Height="120px" Class="mb-3" />
+                    <MudSkeleton Height="120px" />
+                }
+                else if (GetOpenTodos().Count == 0)
+                {
+                    <MudPaper Class="empty-state" Elevation="0">Nenhuma tarefa aberta.</MudPaper>
+                }
+                else
+                {
+                    @foreach (TodoItem item in GetOpenTodos())
+                    {
+                        <TodoCard Item="item" OnComplete="CompleteTodoAsync" OnArchive="ArchiveTodoAsync" OnCopy="CopyTodoAsync" />
+                    }
+                }
+        </div>
+
+        <div class="lane">
+            <div class="lane__header">
+                <MudText Typo="Typo.h6">Concluidas</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">@GetDoneTodos().Count</MudChip>
+            </div>
+                @if (GetDoneTodos().Count == 0)
+                {
+                    <MudPaper Class="empty-state" Elevation="0">Conclua uma tarefa para ve-la aqui.</MudPaper>
+                }
+                else
+                {
+                    @foreach (TodoItem item in GetDoneTodos())
+                    {
+                        <TodoCard Item="item" OnArchive="ArchiveTodoAsync" OnCopy="CopyTodoAsync" />
+                    }
+                }
+        </div>
+    </section>
+</div>
+
+@code {
+    private MudForm? todoForm;
+    private List<TodoItem> todos = [];
+    private bool loading = true;
+    private bool busy;
+    private bool showArchived;
+    private string description = string.Empty;
+    private string labelsText = string.Empty;
+    private DateTime? dueDate;
+    private TodoPriority priority = TodoPriority.Medium;
+
+    private IReadOnlyList<TodoItem> GetVisibleTodos() => showArchived ? todos : todos.Where(todo => !todo.IsArchived).ToList();
+
+    private IReadOnlyList<TodoItem> GetOpenTodos() => GetVisibleTodos()
+        .Where(todo => !todo.IsCompleted && !todo.IsArchived)
+        .OrderBy(todo => todo.DueDate ?? DateTime.MaxValue)
+        .ThenBy(todo => todo.Priority)
+        .ToList();
+
+    private IReadOnlyList<TodoItem> GetDoneTodos() => GetVisibleTodos()
+        .Where(todo => todo.IsCompleted && !todo.IsArchived)
+        .OrderByDescending(todo => todo.CompletedAt)
+        .ToList();
+
+    private IReadOnlyList<TodoItem> GetArchivedTodos() => todos.Where(todo => todo.IsArchived).ToList();
+
+    private int GetHighPriorityCount() => GetOpenTodos().Count(todo => todo.Priority == TodoPriority.High);
+
+    private string ConnectionText => Realtime.IsConnected ? "Sincronizado" : "Atualizacao local";
+
+    private string ConnectionIcon => Realtime.IsConnected ? Icons.Material.Outlined.Wifi : Icons.Material.Outlined.WifiOff;
+
+    private Color ConnectionColor => Realtime.IsConnected ? Color.Success : Color.Default;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.InitializeAsync();
+
+        if (!Auth.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        Realtime.TodoItemsChanged += OnTodoItemsChanged;
+        await Realtime.StartAsync();
+        await LoadAsync();
+        await LoadPreferencesAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+
+        try
+        {
+            Guid userId = Auth.User?.Id ?? Guid.Empty;
+            todos = (await Api.GetTodosAsync(pageSize: 100))
+                .Where(todo => todo.UserId == userId)
+                .ToList();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadPreferencesAsync()
+    {
+        if (Auth.User is null)
+        {
+            return;
+        }
+
+        UserPreference? preference = await Api.GetPreferencesAsync(Auth.User.Id);
+        showArchived = preference?.ShowArchived ?? false;
+    }
+
+    private async Task CreateTodoAsync()
+    {
+        await todoForm!.ValidateAsync();
+
+        if (!todoForm.IsValid || Auth.User is null)
+        {
+            return;
+        }
+
+        await RunAsync(async () =>
+        {
+            string[] labels = labelsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            await Api.CreateTodoAsync(new CreateTodoRequest(Auth.User.Id, description, priority, dueDate, labels));
+            description = string.Empty;
+            labelsText = string.Empty;
+            dueDate = null;
+            priority = TodoPriority.Medium;
+            await LoadAsync();
+        });
+    }
+
+    private Task CompleteTodoAsync(TodoItem item) => RunAsync(async () =>
+    {
+        await Api.CompleteTodoAsync(item.Id);
+        await LoadAsync();
+    });
+
+    private Task ArchiveTodoAsync(TodoItem item) => RunAsync(async () =>
+    {
+        await Api.ArchiveTodoAsync(item.Id);
+        await LoadAsync();
+    });
+
+    private Task CopyTodoAsync(TodoItem item) => RunAsync(async () =>
+    {
+        await Api.CopyTodoAsync(item.Id);
+        await LoadAsync();
+    });
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+
+        try
+        {
+            await action();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void OnTodoItemsChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Realtime.TodoItemsChanged -= OnTodoItemsChanged;
+        await Realtime.DisposeAsync();
+    }
+}
